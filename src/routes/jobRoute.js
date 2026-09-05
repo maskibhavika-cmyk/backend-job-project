@@ -1,7 +1,14 @@
-
 const express = require('express');
 
-const { createJobController, getAllJobsController, getSingleJobController, updateJobController, deletejobController } = require('../controllers/jobController');
+const {
+    createJobController,
+    getAllJobsController,
+    getSingleJobController,
+    updateJobController,
+    updateJobStatusController,
+    deletejobController,
+    cancelJobController
+} = require('../controllers/jobController');
 
 const { authMiddleware } = require('../middlewares/authMiddleware');
 
@@ -19,6 +26,24 @@ router.put('/update/:id', authMiddleware, updateJobController);
 
 router.delete('/delete/:id', authMiddleware, deletejobController);
 
-router.delete( '/admin/delete/:id',authMiddleware, roleMiddleware(["admin"]), deletejobController);
+router.delete(
+    '/admin/delete/:id',
+    authMiddleware,
+    roleMiddleware(["admin"]),
+    deletejobController
+);
+
+// Update Job Status
+router.put(
+    '/status/:id',
+    authMiddleware,
+    updateJobStatusController
+);
+
+router.delete(
+    '/cancel/:jobId',
+    authMiddleware,
+    cancelJobController
+);
 
 module.exports = router;
