@@ -1,39 +1,46 @@
-const express = require('express');
-const authControllere = require('../controllers/authController');
-const rateLimit = require('express-rate-limit');
+const express = require("express");
+
+const authControllere = require("../controllers/authController");
+
+const { loginLimiter } = require("../middlewares/rateLimiter");
 
 const router = express.Router();
-const loginLimiter = rateLimit({
-    windowMs :15 * 60 * 1000,
-    max:5,
 
-    message:{
-   success:false,
-   message:"Too many login attempts.please try again later."
-    }
+const {sanitizeRegisterInput,  sanitizeLoginInput} = require("../middlewares/sanitize");
+    
+// REGISTER
+router.post( "/register", authControllere.registerUser);
+  
 
-})
 
-router.post('/register',authControllere.registerUser)
+// LOGIN
+router.post("/login", loginLimiter,authControllere.loginUser);
+    
 
-router.post('/login',loginLimiter,authControllere.loginUser )
-router.get('/verify-email/:token',authControllere.verifyEmail);
+// VERIFY EMAIL
+router.get( "/verify-email/:token", authControllere.verifyEmail);
+   
 
-router.post(
-    '/forgot-password',
-    authControllere.forgotPassword
-);
+// FORGOT PASSWORD
+router.post("/forgot-password", authControllere.forgotPassword);
 
-router.post(
-    '/reset-password/:token',
-    authControllere.resetPassword
-);
-    router.post(
-    '/refresh-token',
-    authControllere.refreshAccessToken
-);
-router.post(
-    '/logout',
-    authControllere.logoutUser
-);
+    
+
+
+// RESET PASSWORD
+router.post( "/reset-password/:token", authControllere.resetPassword);
+   
+
+
+// REFRESH TOKEN
+router.post( "/refresh-token",authControllere.refreshAccessToken);
+    
+
+
+// LOGOUT
+router.post( "/logout",authControllere.logoutUser);
+    
+// input sanitization
+router.post( "/register",sanitizeRegisterInput, authControllere.registerUser);
+   
 module.exports = router;

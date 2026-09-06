@@ -2,11 +2,8 @@ const userModel = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const {
-    sendVerificationEmail,
-    sendPasswordResetEmail
-} = require("../utils/emailService");
-
+const {sendVerificationEmail,sendPasswordResetEmail} = require("../utils/emailService");
+   
 
 //  REGISTER USER
 
@@ -109,12 +106,18 @@ async function loginUser(req, res) {
                 ...(email ? [{ email }] : [])
             ]
         });
-
         if (!user) {
-            return res.status(401).json({
-                message: "Invalid credentials"
-            });
-        }
+    return res.status(401).json({
+        message: "Invalid credentials"
+    });
+}
+// Check if account is locked
+if (user.lockUntil && user.lockUntil > new Date()) {
+
+    return res.status(423).json({
+        message: "Account is temporarily locked. Please try again later."
+    });
+}
 
         if (!user.password) {
             return res.status(500).json({
@@ -127,11 +130,37 @@ async function loginUser(req, res) {
             user.password
         );
 
-        if (!isPasswordValid) {
-            return res.status(401).json({
-                message: "Invalid credentials"
-            });
-        }
+       if (!isPasswordValid) {
+
+    user.failedLoginAttempts += 1;
+
+    // Lock after 5 failed attempts
+    if (user.failedLoginAttempts >= 5) {
+
+        user.lockUntil = new Date(
+            Date.now() + 15 * 60 * 1000
+        );
+
+        user.failedLoginAttempts = 0;
+
+        await user.save();
+
+        return res.status(423).json({
+            message: "Account locked for 15 minutes due to multiple failed login attempts."
+        });
+    }
+
+    await user.save();
+
+    return res.status(401).json({
+        message: "Invalid credentials"
+    });
+}
+// Successful login
+user.failedLoginAttempts = 0;
+user.lockUntil = null;
+
+await user.save();
 
         
 const accessToken = jwt.sign(
@@ -518,11 +547,5 @@ async function logoutUser(req, res) {
         });
     }
 }
-module.exports = {
-    registerUser,
-    loginUser,
-    verifyEmail,
-    forgotPassword,
-    resetPassword,
-    refreshAccessToken, logoutUser,
-};
+module.exports = { registerUser, loginUser, verifyEmail, forgotPassword,resetPassword,refreshAccessToken, logoutUser};
+    

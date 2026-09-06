@@ -66,6 +66,25 @@ refreshTokenVersion: {
     type: Number,
     default: 0
 },
+// Account Locking
+failedLoginAttempts: {
+    type: Number,
+    default: 0
+},
+
+lockUntil: {
+    type: Date,
+    default: null
+},
+failedLoginAttempts: {
+    type: Number,
+    default: 0
+},
+
+lockUntil: {
+    type: Date,
+    default: null
+},
 });
 
 const userModel = mongoose.model("user", userSchema);
